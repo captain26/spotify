@@ -9,6 +9,7 @@ const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
 
 const { Readable } = require('stream');
+const { RSA_NO_PADDING } = require('constants');
 const app = express();
 app.use('/tracks', trackRoute);
 
@@ -161,13 +162,44 @@ trackRoute.post('/playlist/create', (req, res) => {
   res.send("Document inserted succussfully!");
 });
 
-trackRoute.get('/playlist/:playlistID', (req, res) => {
-});
-
+ 
 trackRoute.get('/playlist/:userID', (req, res) => {
+  console.log("hi");
+  try {
+    var userId = ObjectID(req.params.userID);
+  } catch(err) {
+    return res.status(400).json({ message: "Error" }); 
+  }
+  User.findById(userId).exec((err,user) =>{
+    const playlists = user.playlists;
+    if(err){
+      console.log("error");
+    }
+    console.log(playlists);
+    playlists.forEach(play => {
+      Playlist.find({_id: play},(err,playlist) => {
+        if(err){
+          return res.status.json({
+            error: "Could Not Found Any Playlist",
+          })
+        }
+        res.json(playlist);
+      })
+    });
+
+  })
+  // res.send("WOrking");
 });
 
-trackRoute.get('/playlists', (req, res) => {
+trackRoute.get('/playlists/all', (req, res) => {
+    Playlist.find().exec((err,playlist) => {
+      if(err){
+        // return res.status(400).json({
+        //   error: "No Found"
+        // })
+      }
+      res.json(playlist)
+    })
 });
 
 trackRoute.post('/playlist/:playlistID', (req, res) => {
